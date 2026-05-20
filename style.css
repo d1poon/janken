@@ -520,3 +520,188 @@ header p.pvp-mode {
   75%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
 }
+
+/* ===== モード切替バー ===== */
+.mode-bar {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 6px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn.active {
+  background: var(--surface2);
+  color: var(--gold);
+}
+
+/* ===== タイムアタック タイマー ===== */
+.ta-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+#ta-time-left {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+#ta-time-left.danger {
+  color: var(--lose);
+  animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+.ta-timer-unit {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+/* ===== 難易度選択 ===== */
+.difficulty-bar {
+  width: 100%;
+}
+
+.diff-btns {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.diff-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1.5px solid transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 7px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diff-btn.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(233,69,96,0.12);
+}
+
+.diff-btn[data-diff="insane"].active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245,166,35,0.12);
+}
+
+.diff-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ===== 実績・バッジセクション ===== */
+.badge-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.badge-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.badge-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badge-count {
+  font-size: 0.75rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.badge-item.unlocked {
+  border-color: rgba(245,166,35,0.35);
+  background: rgba(245,166,35,0.07);
+}
+
+.badge-item.newly-unlocked {
+  animation: badge-pop 0.6s ease;
+}
+
+.badge-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.25);
+  transition: filter 0.3s;
+}
+
+.badge-item.unlocked .badge-icon {
+  filter: grayscale(0) opacity(1);
+}
+
+.badge-name {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.badge-item.unlocked .badge-name {
+  color: var(--text);
+}
+
+/* ===== 追加アニメーション ===== */
+@keyframes timer-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
+}
+
+@keyframes badge-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}

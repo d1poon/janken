@@ -17,6 +17,12 @@
       <p id="header-sub">何連勝できるかチャレンジ</p>
     </header>
 
+    <!-- モード切替バー -->
+    <div class="mode-bar" id="mode-bar">
+      <button class="mode-btn active" data-mode="streak">🏆 連勝モード</button>
+      <button class="mode-btn" data-mode="timeattack">⏱ タイムアタック</button>
+    </div>
+
     <!-- PvP招待パネル（PvPモード時のみ表示） -->
     <div class="pvp-invite" id="pvp-invite" style="display:none">
       <div class="pvp-invite-title">👥 友達を招待</div>
@@ -34,11 +40,11 @@
     <!-- スコアバー -->
     <div class="score-bar">
       <div class="score-item">
-        <div class="score-label">現在の連勝</div>
+        <div class="score-label" id="score-label-left">現在の連勝</div>
         <div class="score-value streak" id="streak">0</div>
       </div>
       <div class="score-item">
-        <div class="score-label">🏆 自己ベスト</div>
+        <div class="score-label" id="score-label-right">🏆 自己ベスト</div>
         <div class="score-value" id="best">—</div>
       </div>
     </div>
@@ -46,6 +52,12 @@
     <!-- バトルエリア -->
     <div class="battle-area" id="battle-area">
       <div class="confetti-layer" id="confetti-layer"></div>
+
+      <!-- タイムアタック タイマー（TAモード時のみ表示） -->
+      <div class="ta-timer" id="ta-timer" style="display:none">
+        <span id="ta-time-left">30</span>
+        <span class="ta-timer-unit">秒</span>
+      </div>
 
       <div class="cpu-hand-wrap">
         <span class="cpu-label" id="opponent-label">CPU</span>
@@ -64,6 +76,17 @@
     <!-- プレイヤー選択 -->
     <div class="player-section">
       <div class="player-label">あなたの手を選んでください</div>
+
+      <!-- 難易度選択（CPUモード時のみ） -->
+      <div class="difficulty-bar" id="difficulty-bar">
+        <div class="diff-btns">
+          <button class="diff-btn" data-diff="easy">やさしい</button>
+          <button class="diff-btn active" data-diff="normal">ふつう</button>
+          <button class="diff-btn" data-diff="hard">つよい</button>
+          <button class="diff-btn" data-diff="insane">🔥 鬼</button>
+        </div>
+      </div>
+
       <div class="choice-buttons">
         <button class="choice-btn" data-hand="rock">
           <span class="btn-icon">✊</span>
@@ -99,6 +122,15 @@
           <li class="rank-empty">読み込み中…</li>
         </ul>
       </div>
+    </div>
+
+    <!-- 実績・バッジ -->
+    <div class="badge-section" id="badge-section">
+      <div class="badge-section-header">
+        <span class="badge-section-title">🏅 実績</span>
+        <span class="badge-count" id="badge-count">0/8</span>
+      </div>
+      <div class="badge-grid" id="badge-grid"></div>
     </div>
 
   </div>
