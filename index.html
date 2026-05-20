@@ -31,20 +31,20 @@
 
     <!-- バトルエリア -->
     <div class="battle-area" id="battle-area">
-      <!-- 紙吹雪 -->
       <div class="confetti-layer" id="confetti-layer"></div>
 
-      <!-- CPU手 -->
       <div class="cpu-hand-wrap">
         <span class="cpu-label">CPU</span>
         <span class="hand-icon idle" id="cpu-hand">✊</span>
       </div>
 
-      <!-- 掛け声 -->
       <div class="call-text" id="call-text">じゃんけん？</div>
-
-      <!-- 結果 -->
       <div class="result-text" id="result-text"></div>
+
+      <!-- シェアボタン（負け時に表示） -->
+      <button class="share-btn" id="share-btn" style="display:none">
+        𝕏 連勝記録をシェア
+      </button>
     </div>
 
     <!-- プレイヤー選択 -->
@@ -66,12 +66,24 @@
       </div>
     </div>
 
-    <!-- ランキング -->
+    <!-- ランキング（タブ切り替え） -->
     <div class="ranking">
-      <h2>🏅 最高連勝ランキング TOP5</h2>
-      <ul class="rank-list" id="rank-list">
-        <li class="rank-empty">まだ記録がありません</li>
-      </ul>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tab-local">🏅 自分の記録</button>
+        <button class="tab-btn" data-tab="tab-online">🌍 世界ランキング</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-local">
+        <ul class="rank-list" id="rank-list">
+          <li class="rank-empty">まだ記録がありません</li>
+        </ul>
+      </div>
+
+      <div class="tab-panel" id="tab-online">
+        <ul class="rank-list" id="online-rank-list">
+          <li class="rank-empty">読み込み中…</li>
+        </ul>
+      </div>
     </div>
 
   </div>

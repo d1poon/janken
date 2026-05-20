@@ -27,12 +27,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   overflow-x: hidden;
   user-select: none;
 }
 
-/* ===== レイアウト ===== */
 .app {
   width: 100%;
   max-width: 420px;
@@ -74,9 +72,7 @@ header p {
   align-items: center;
 }
 
-.score-item {
-  text-align: center;
-}
+.score-item { text-align: center; }
 
 .score-label {
   font-size: 0.7rem;
@@ -89,13 +85,9 @@ header p {
   font-size: 1.8rem;
   font-weight: 800;
   line-height: 1.1;
-  transition: transform 0.15s;
 }
 
-.score-value.pop {
-  animation: pop 0.3s ease;
-}
-
+.score-value.pop { animation: pop 0.3s ease; }
 .score-value.streak { color: var(--gold); }
 
 /* ===== バトルエリア ===== */
@@ -109,10 +101,9 @@ header p {
   gap: 16px;
   position: relative;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 230px;
 }
 
-/* 結果フラッシュ背景 */
 .battle-area::before {
   content: '';
   position: absolute;
@@ -126,7 +117,6 @@ header p {
 .battle-area.flash-lose::before { background: var(--lose); opacity: 0.12; }
 .battle-area.flash-draw::before { background: var(--draw); opacity: 0.08; }
 
-/* CPU手エリア */
 .cpu-hand-wrap {
   display: flex;
   flex-direction: column;
@@ -146,34 +136,23 @@ header p {
   line-height: 1;
   display: block;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
-  transition: transform 0.15s;
 }
 
-/* CPU待機アニメ */
-.hand-icon.idle {
-  animation: idle-sway 1.8s ease-in-out infinite;
-}
+.hand-icon.idle    { animation: idle-sway 1.8s ease-in-out infinite; }
+.hand-icon.shaking { animation: shake 0.5s ease-in-out; }
 
-/* じゃんけん振りアニメ */
-.hand-icon.shaking {
-  animation: shake 0.5s ease-in-out;
-}
-
-/* 掛け声テキスト */
 .call-text {
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   min-height: 2rem;
   text-align: center;
-  transition: opacity 0.2s;
 }
 
-/* 結果テキスト */
 .result-text {
   font-size: 1.8rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   min-height: 2.2rem;
   text-align: center;
   opacity: 0;
@@ -181,16 +160,11 @@ header p {
   transition: opacity 0.2s, transform 0.2s;
 }
 
-.result-text.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
+.result-text.show { opacity: 1; transform: scale(1); }
 .result-text.win  { color: var(--win);  animation: bounce 0.5s ease; }
 .result-text.lose { color: var(--lose); animation: shake-text 0.4s ease; }
 .result-text.draw { color: var(--draw); }
 
-/* 紙吹雪レイヤー */
 .confetti-layer {
   position: absolute;
   inset: 0;
@@ -206,6 +180,27 @@ header p {
   top: -10px;
   animation: confetti-fall 1.2s ease-in forwards;
 }
+
+/* ===== シェアボタン ===== */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #000;
+  color: #fff;
+  border: 1.5px solid #555;
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.share-btn:active { transform: scale(0.94); }
+.share-btn:hover  { background: #1a1a1a; }
 
 /* ===== プレイヤーボタン ===== */
 .player-section {
@@ -248,57 +243,54 @@ header p {
   -webkit-tap-highlight-color: transparent;
 }
 
-.choice-btn:active {
-  transform: scale(0.92);
-}
+.choice-btn:active { transform: scale(0.92); }
+.choice-btn:hover  { border-color: var(--accent); background: #1a2a50; }
+.choice-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.choice-btn:hover {
-  border-color: var(--accent);
-  background: #1a2a50;
-}
+.choice-btn .btn-icon  { font-size: 2.4rem; line-height: 1; }
+.choice-btn .btn-label { font-size: 0.8rem; font-weight: 600; }
 
-.choice-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.choice-btn .btn-icon {
-  font-size: 2.4rem;
-  line-height: 1;
-}
-
-.choice-btn .btn-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* 選ばれたボタン強調 */
 .choice-btn.selected {
   border-color: var(--gold);
   background: #1e2c1e;
   animation: selected-pulse 0.4s ease;
 }
 
-/* ===== ランキング ===== */
+/* ===== ランキング（タブ） ===== */
 .ranking {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 16px 20px;
+  overflow: hidden;
 }
 
-.ranking h2 {
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gold);
-  margin-bottom: 12px;
+.tab-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
+
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 12px 8px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-btn.active {
+  color: var(--gold);
+  background: rgba(245,166,35,0.06);
+  border-bottom: 2px solid var(--gold);
+  margin-bottom: -1px;
+}
+
+.tab-panel { display: none; padding: 16px 20px; }
+.tab-panel.active { display: block; }
 
 .rank-list {
   list-style: none;
@@ -314,43 +306,15 @@ header p {
   padding: 8px 12px;
   background: rgba(255,255,255,0.04);
   border-radius: 8px;
-  transition: background 0.2s;
 }
 
-.rank-item.new-record {
-  animation: new-record-glow 1.5s ease;
-}
+.rank-item.new-record { animation: new-record-glow 1.5s ease; }
 
-.rank-medal {
-  font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
-}
-
-.rank-score {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--gold);
-  min-width: 40px;
-}
-
-.rank-unit {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.rank-date {
-  margin-left: auto;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.rank-empty {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  text-align: center;
-  padding: 8px;
-}
+.rank-medal { font-size: 1.2rem; width: 24px; text-align: center; }
+.rank-score { font-size: 1.1rem; font-weight: 800; color: var(--gold); min-width: 40px; }
+.rank-unit  { font-size: 0.75rem; color: var(--text-muted); }
+.rank-date  { margin-left: auto; font-size: 0.7rem; color: var(--text-muted); }
+.rank-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 8px; }
 
 /* ===== NEW RECORD バナー ===== */
 .new-record-banner {
@@ -371,23 +335,21 @@ header p {
   opacity: 0;
 }
 
-.new-record-banner.show {
-  animation: banner-pop 2s ease forwards;
-}
+.new-record-banner.show { animation: banner-pop 2s ease forwards; }
 
-/* ===== アニメーション定義 ===== */
+/* ===== アニメーション ===== */
 @keyframes idle-sway {
   0%, 100% { transform: rotate(-5deg) translateY(0); }
-  50%       { transform: rotate(5deg)  translateY(-6px); }
+  50%       { transform: rotate(5deg) translateY(-6px); }
 }
 
 @keyframes shake {
-  0%   { transform: translateY(0)    rotate(0deg); }
+  0%   { transform: translateY(0) rotate(0deg); }
   20%  { transform: translateY(-14px) rotate(-12deg); }
-  40%  { transform: translateY(0)    rotate(8deg); }
+  40%  { transform: translateY(0) rotate(8deg); }
   60%  { transform: translateY(-10px) rotate(-8deg); }
-  80%  { transform: translateY(0)    rotate(4deg); }
-  100% { transform: translateY(0)    rotate(0deg); }
+  80%  { transform: translateY(0) rotate(4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes pop {
