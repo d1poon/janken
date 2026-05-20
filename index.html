@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>じゃんけん！</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ヘッダー -->
+    <header>
+      <h1>✊ じゃんけん！</h1>
+      <p>何連勝できるかチャレンジ</p>
+    </header>
+
+    <!-- スコアバー -->
+    <div class="score-bar">
+      <div class="score-item">
+        <div class="score-label">現在の連勝</div>
+        <div class="score-value streak" id="streak">0</div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">🏆 自己ベスト</div>
+        <div class="score-value" id="best">—</div>
+      </div>
+    </div>
+
+    <!-- バトルエリア -->
+    <div class="battle-area" id="battle-area">
+      <!-- 紙吹雪 -->
+      <div class="confetti-layer" id="confetti-layer"></div>
+
+      <!-- CPU手 -->
+      <div class="cpu-hand-wrap">
+        <span class="cpu-label">CPU</span>
+        <span class="hand-icon idle" id="cpu-hand">✊</span>
+      </div>
+
+      <!-- 掛け声 -->
+      <div class="call-text" id="call-text">じゃんけん？</div>
+
+      <!-- 結果 -->
+      <div class="result-text" id="result-text"></div>
+    </div>
+
+    <!-- プレイヤー選択 -->
+    <div class="player-section">
+      <div class="player-label">あなたの手を選んでください</div>
+      <div class="choice-buttons">
+        <button class="choice-btn" data-hand="rock">
+          <span class="btn-icon">✊</span>
+          <span class="btn-label">グー</span>
+        </button>
+        <button class="choice-btn" data-hand="scissors">
+          <span class="btn-icon">✌️</span>
+          <span class="btn-label">チョキ</span>
+        </button>
+        <button class="choice-btn" data-hand="paper">
+          <span class="btn-icon">🖐️</span>
+          <span class="btn-label">パー</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ランキング -->
+    <div class="ranking">
+      <h2>🏅 最高連勝ランキング TOP5</h2>
+      <ul class="rank-list" id="rank-list">
+        <li class="rank-empty">まだ記録がありません</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- NEW RECORD バナー -->
+  <div class="new-record-banner" id="new-record-banner"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

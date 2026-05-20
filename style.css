@@ -1,0 +1,436 @@
+/* ===== リセット・ベース ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --surface2: #0f3460;
+  --accent: #e94560;
+  --gold: #f5a623;
+  --text: #eaeaea;
+  --text-muted: #8892a4;
+  --win: #4caf50;
+  --lose: #f44336;
+  --draw: #9e9e9e;
+  --radius: 16px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* ===== レイアウト ===== */
+.app {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== ヘッダー ===== */
+header {
+  text-align: center;
+  padding-top: 8px;
+}
+
+header h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #e94560, #f5a623);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+header p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+/* ===== スコアバー ===== */
+.score-bar {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.score-item {
+  text-align: center;
+}
+
+.score-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.score-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  transition: transform 0.15s;
+}
+
+.score-value.pop {
+  animation: pop 0.3s ease;
+}
+
+.score-value.streak { color: var(--gold); }
+
+/* ===== バトルエリア ===== */
+.battle-area {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+/* 結果フラッシュ背景 */
+.battle-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.battle-area.flash-win::before  { background: var(--win);  opacity: 0.12; }
+.battle-area.flash-lose::before { background: var(--lose); opacity: 0.12; }
+.battle-area.flash-draw::before { background: var(--draw); opacity: 0.08; }
+
+/* CPU手エリア */
+.cpu-hand-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cpu-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hand-icon {
+  font-size: 5rem;
+  line-height: 1;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+  transition: transform 0.15s;
+}
+
+/* CPU待機アニメ */
+.hand-icon.idle {
+  animation: idle-sway 1.8s ease-in-out infinite;
+}
+
+/* じゃんけん振りアニメ */
+.hand-icon.shaking {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 掛け声テキスト */
+.call-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  min-height: 2rem;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+/* 結果テキスト */
+.result-text {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  min-height: 2.2rem;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.result-text.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.result-text.win  { color: var(--win);  animation: bounce 0.5s ease; }
+.result-text.lose { color: var(--lose); animation: shake-text 0.4s ease; }
+.result-text.draw { color: var(--draw); }
+
+/* 紙吹雪レイヤー */
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  top: -10px;
+  animation: confetti-fall 1.2s ease-in forwards;
+}
+
+/* ===== プレイヤーボタン ===== */
+.player-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+
+.choice-btn {
+  flex: 1;
+  max-width: 110px;
+  background: var(--surface2);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 14px 8px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.choice-btn:active {
+  transform: scale(0.92);
+}
+
+.choice-btn:hover {
+  border-color: var(--accent);
+  background: #1a2a50;
+}
+
+.choice-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.choice-btn .btn-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.choice-btn .btn-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* 選ばれたボタン強調 */
+.choice-btn.selected {
+  border-color: var(--gold);
+  background: #1e2c1e;
+  animation: selected-pulse 0.4s ease;
+}
+
+/* ===== ランキング ===== */
+.ranking {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.ranking h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rank-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.rank-item.new-record {
+  animation: new-record-glow 1.5s ease;
+}
+
+.rank-medal {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.rank-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gold);
+  min-width: 40px;
+}
+
+.rank-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.rank-date {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.rank-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 8px;
+}
+
+/* ===== NEW RECORD バナー ===== */
+.new-record-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: linear-gradient(135deg, #f5a623, #f7c94e);
+  color: #1a1a2e;
+  font-size: 1.4rem;
+  font-weight: 900;
+  padding: 16px 32px;
+  border-radius: 16px;
+  letter-spacing: 0.1em;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 8px 32px rgba(245,166,35,0.5);
+  opacity: 0;
+}
+
+.new-record-banner.show {
+  animation: banner-pop 2s ease forwards;
+}
+
+/* ===== アニメーション定義 ===== */
+@keyframes idle-sway {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50%       { transform: rotate(5deg)  translateY(-6px); }
+}
+
+@keyframes shake {
+  0%   { transform: translateY(0)    rotate(0deg); }
+  20%  { transform: translateY(-14px) rotate(-12deg); }
+  40%  { transform: translateY(0)    rotate(8deg); }
+  60%  { transform: translateY(-10px) rotate(-8deg); }
+  80%  { transform: translateY(0)    rotate(4deg); }
+  100% { transform: translateY(0)    rotate(0deg); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+  0%   { transform: scale(0.5) translateY(0); }
+  50%  { transform: scale(1.2) translateY(-8px); }
+  75%  { transform: scale(0.95); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes shake-text {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+@keyframes selected-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245,166,35,0.6); }
+  50%  { box-shadow: 0 0 0 8px rgba(245,166,35,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); }
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+}
+
+@keyframes new-record-glow {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 0 2px var(--gold); }
+}
+
+@keyframes banner-pop {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  25%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  75%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+}
