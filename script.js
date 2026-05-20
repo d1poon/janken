@@ -7,7 +7,6 @@ const HANDS = {
   paper:    { icon: '🖐️', label: 'パー' },
 };
 
-// 勝ち判定: WIN_MAP[player] = cpuの手（playerが勝つ場合）
 const WIN_MAP = {
   rock: 'scissors',
   scissors: 'paper',
@@ -19,19 +18,20 @@ const RANKING_MAX  = 5;
 const MEDALS       = ['🥇', '🥈', '🥉', '4', '5'];
 const HISTORY_SIZE = 10;
 
-// 掛け声バリエーション（§02 Content）
-const CALLS = [
-  'じゃんけん…',
-  '最初はグー…',
-  'いくぞ…',
-  'さぁいくよ…',
-  'そーれ…',
-];
+const CALLS = ['じゃんけん…', '最初はグー…', 'いくぞ…', 'さぁいくよ…', 'そーれ…'];
 
 // ===== 状態 =====
-let streak = 0;
+let streak    = 0;
+let pvpStreak = 0;
 let isPlaying = false;
 const playerHistory = [];
+
+// PvPモード
+let pvpMode    = false;
+let roomId     = null;
+let playerNum  = null; // 1 or 2
+let myHandPvp  = null; // 自分が選んだ手（PvP）
+let pollTimer  = null;
 
 // ===== DOM =====
 const cpuHandEl        = document.getElementById('cpu-hand');
@@ -46,8 +46,18 @@ const onlineRankListEl = document.getElementById('online-rank-list');
 const newRecordBanner  = document.getElementById('new-record-banner');
 const confettiLayer    = document.getElementById('confetti-layer');
 const shareBtn         = document.getElementById('share-btn');
+const pvpCreateBtn     = document.getElementById('pvp-create-btn');
+const pvpInviteEl      = document.getElementById('pvp-invite');
+const pvpUrlBoxEl      = document.getElementById('pvp-url-box');
+const pvpCopyBtnEl     = document.getElementById('pvp-copy-btn');
+const pvpStatusBarEl   = document.getElementById('pvp-status-bar');
+const pvpStatusTextEl  = document.getElementById('pvp-status-text');
+const pvpExitBtnEl     = document.getElementById('pvp-exit-btn');
+const opponentLabelEl  = document.getElementById('opponent-label');
+const rankingSection   = document.getElementById('ranking-section');
+const headerSub        = document.getElementById('header-sub');
 
-// ===== 効果音（Web Audio API） =====
+// ===== 効果音 =====
 let audioCtx = null;
 
 function getAudioCtx() {
@@ -65,9 +75,7 @@ function playSound(type) {
     const now = ctx.currentTime;
 
     if (type === 'pon') {
-      // タム音
-      const osc = ctx.createOscillator();
-      const g   = ctx.createGain();
+      const osc = ctx.createOscillator(), g = ctx.createGain();
       osc.connect(g); g.connect(ctx.destination);
       osc.frequency.setValueAtTime(220, now);
       osc.frequency.exponentialRampToValueAtTime(55, now + 0.12);
@@ -77,13 +85,10 @@ function playSound(type) {
     }
 
     if (type === 'win') {
-      // 三和音（C-E-G）
       [523, 659, 784].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const g   = ctx.createGain();
+        const osc = ctx.createOscillator(), g = ctx.createGain();
         osc.connect(g); g.connect(ctx.destination);
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
+        osc.type = 'triangle'; osc.frequency.value = freq;
         g.gain.setValueAtTime(0.22, now + i * 0.11);
         g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.11 + 0.25);
         osc.start(now + i * 0.11); osc.stop(now + i * 0.11 + 0.28);
@@ -91,9 +96,7 @@ function playSound(type) {
     }
 
     if (type === 'lose') {
-      // 下降音
-      const osc = ctx.createOscillator();
-      const g   = ctx.createGain();
+      const osc = ctx.createOscillator(), g = ctx.createGain();
       osc.connect(g); g.connect(ctx.destination);
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(350, now);
@@ -104,44 +107,43 @@ function playSound(type) {
     }
 
     if (type === 'record') {
-      // ファンファーレ（C-E-G-C'）
       [523, 659, 784, 1047].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const g   = ctx.createGain();
+        const osc = ctx.createOscillator(), g = ctx.createGain();
         osc.connect(g); g.connect(ctx.destination);
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
+        osc.type = 'triangle'; osc.frequency.value = freq;
         g.gain.setValueAtTime(0.22, now + i * 0.1);
         g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
         osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.3);
       });
     }
+
+    if (type === 'pvp-join') {
+      // 対戦相手が参加した時の音
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(660, now + 0.1);
+      g.gain.setValueAtTime(0.2, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now); osc.stop(now + 0.3);
+    }
   } catch (_) { /* 未対応ブラウザは無視 */ }
 }
 
-// ===== CPU AI（§01 Engineering） =====
+// ===== CPU AI =====
 function getCpuHand() {
   const keys = Object.keys(HANDS);
-
-  // 履歴が少ない間はランダム
-  if (playerHistory.length < 3) {
-    return keys[Math.floor(Math.random() * keys.length)];
-  }
-
-  // 直近の手でプレイヤーの傾向を分析
+  if (playerHistory.length < 3) return keys[Math.floor(Math.random() * keys.length)];
   const recent = playerHistory.slice(-HISTORY_SIZE);
   const counts = { rock: 0, scissors: 0, paper: 0 };
   recent.forEach(h => counts[h]++);
   const mostUsed = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-
-  // 50%でカウンター手、50%でランダム（ランダム要素を残してゲーム性を維持）
-  if (Math.random() < 0.5) {
-    return Object.entries(WIN_MAP).find(([, v]) => v === mostUsed)[0];
-  }
+  if (Math.random() < 0.5) return Object.entries(WIN_MAP).find(([, v]) => v === mostUsed)[0];
   return keys[Math.floor(Math.random() * keys.length)];
 }
 
-// ===== 連勝メッセージ（§02 Content） =====
+// ===== 連勝メッセージ =====
 function getWinMessage(s) {
   if (s >= 10) return `${s}連勝！伝説だ🏆`;
   if (s >= 8)  return `${s}連勝…バケモノか👹`;
@@ -156,9 +158,7 @@ async function fetchOnlineRanking() {
     const res = await fetch('/api/ranking');
     if (!res.ok) return null;
     return await res.json();
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 async function submitOnlineScore(score) {
@@ -168,8 +168,8 @@ async function submitOnlineScore(score) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score }),
     });
-    renderOnlineRanking(); // 送信後に最新状態を再取得
-  } catch { /* ネットワークエラーは無視 */ }
+    renderOnlineRanking();
+  } catch { /* 無視 */ }
 }
 
 async function renderOnlineRanking() {
@@ -189,21 +189,231 @@ async function renderOnlineRanking() {
   `).join('');
 }
 
-// ===== SNSシェア（§03 Business） =====
+// ===== SNSシェア =====
 function shareToX(streakCount) {
   const text = `じゃんけん${streakCount}連勝でゲームオーバー…あなたは勝てる？🤜✌️🖐️ #じゃんけん`;
-  const url  = 'https://janken-xi.vercel.app';
   window.open(
-    `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://janken-xi.vercel.app')}`,
     '_blank'
   );
 }
 
-// ===== 初期化 =====
+// ===========================
+// ===== PvPモード =====
+// ===========================
+
+function parsePvpParams() {
+  const params = new URLSearchParams(window.location.search);
+  return { room: params.get('room'), p: parseInt(params.get('p')) || null };
+}
+
+async function createRoom() {
+  pvpCreateBtn.disabled = true;
+  try {
+    const res = await fetch('/api/room', { method: 'POST' });
+    const data = await res.json();
+    roomId    = data.id;
+    playerNum = 1;
+    enterPvpMode();
+    // 自分用URL（p=1）はブラウザのURLとして設定、シェア用はp=2
+    history.replaceState(null, '', `?room=${roomId}&p=1`);
+    const shareUrl = `${location.origin}?room=${roomId}&p=2`;
+    pvpUrlBoxEl.textContent = shareUrl;
+    pvpInviteEl.style.display = 'flex';
+    pvpStatusTextEl.textContent = '友達の参加を待っています…';
+    startPolling();
+  } catch {
+    pvpCreateBtn.disabled = false;
+    alert('ルームの作成に失敗しました');
+  }
+}
+
+async function joinRoom(rid, pNum) {
+  roomId    = rid;
+  playerNum = pNum;
+  enterPvpMode();
+  // p=2で参加した場合、招待パネルは不要
+  pvpInviteEl.style.display = 'none';
+  pvpStatusTextEl.textContent = '接続中…';
+  startPolling();
+}
+
+function enterPvpMode() {
+  pvpMode = true;
+  pvpStreak = 0;
+  pvpCreateBtn.style.display = 'none';
+  rankingSection.style.display = 'none';
+  pvpStatusBarEl.style.display = 'flex';
+  opponentLabelEl.textContent = '友達';
+  opponentLabelEl.classList.add('pvp');
+  battleArea.classList.add('pvp-active');
+  headerSub.textContent = '友達と対戦中！';
+  headerSub.classList.add('pvp-mode');
+  updateStreakDisplay();
+}
+
+function exitPvpMode() {
+  stopPolling();
+  pvpMode   = false;
+  roomId    = null;
+  playerNum = null;
+  myHandPvp = null;
+  pvpStreak = 0;
+  pvpCreateBtn.disabled = false;
+  pvpCreateBtn.style.display = '';
+  rankingSection.style.display = '';
+  pvpInviteEl.style.display = 'none';
+  pvpStatusBarEl.style.display = 'none';
+  opponentLabelEl.textContent = 'CPU';
+  opponentLabelEl.classList.remove('pvp');
+  battleArea.classList.remove('pvp-active');
+  headerSub.textContent = '何連勝できるかチャレンジ';
+  headerSub.classList.remove('pvp-mode');
+  history.replaceState(null, '', location.pathname);
+  streak = 0;
+  updateStreakDisplay();
+  resetRound();
+}
+
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(() => pollRoom(), 1200);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function pollRoom() {
+  if (!roomId) return;
+  try {
+    const res = await fetch(`/api/room?id=${roomId}`);
+    if (!res.ok) { stopPolling(); return; }
+    handleRoomState(await res.json());
+  } catch { /* 無視 */ }
+}
+
+let prevStatus = null;
+
+function handleRoomState(room) {
+  if (!pvpMode) return;
+
+  const myHand  = playerNum === 1 ? room.player1_hand : room.player2_hand;
+  const oppHand = playerNum === 1 ? room.player2_hand : room.player1_hand;
+
+  // 相手が参加した瞬間を検知
+  if (prevStatus === 'waiting' && (room.status === 'playing' || room.status === 'ready')) {
+    playSound('pvp-join');
+    pvpStatusTextEl.textContent = '対戦相手が参加しました！手を選んでください';
+    pvpStatusTextEl.classList.add('ready');
+    pvpInviteEl.style.display = 'none';
+    resetRound();
+  }
+  prevStatus = room.status;
+
+  if (room.status === 'waiting') {
+    pvpStatusTextEl.textContent = '友達の参加を待っています…';
+    return;
+  }
+
+  if (room.status === 'ready') {
+    pvpStatusTextEl.textContent = '手を選んでください';
+    pvpStatusTextEl.classList.add('ready');
+    return;
+  }
+
+  if (room.status === 'playing' && !myHand && !isPlaying) {
+    pvpStatusTextEl.textContent = '手を選んでください';
+    pvpStatusTextEl.classList.add('ready');
+  }
+
+  if (myHand && !oppHand) {
+    pvpStatusTextEl.textContent = '相手の手を待っています…';
+    pvpStatusTextEl.classList.remove('ready');
+  }
+
+  // 両者揃って判定
+  if (room.status === 'done' && myHand && oppHand && !resultTextEl.classList.contains('show')) {
+    stopPolling();
+    showPvpResult(myHand, oppHand);
+  }
+}
+
+async function submitHandPvp(hand) {
+  myHandPvp = hand;
+  await fetch(`/api/room?id=${roomId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerNum, hand }),
+  });
+  pvpStatusTextEl.textContent = '相手の手を待っています…';
+  pvpStatusTextEl.classList.remove('ready');
+}
+
+function showPvpResult(myHand, oppHand) {
+  // 相手の手を表示（じゃんけんっぽく）
+  callTextEl.textContent = 'ぽん！';
+  playSound('pon');
+  cpuHandEl.textContent = HANDS[oppHand].icon;
+  cpuHandEl.className   = 'hand-icon';
+
+  let resultType, resultLabel;
+  if (myHand === oppHand) {
+    resultType  = 'draw';
+    resultLabel = 'あいこ！もう一回！';
+  } else if (WIN_MAP[myHand] === oppHand) {
+    resultType  = 'win';
+    pvpStreak++;
+    resultLabel = getWinMessage(pvpStreak);
+    triggerConfetti();
+    playSound('win');
+  } else {
+    resultType  = 'lose';
+    pvpStreak = 0;
+    resultLabel = '負け…💀';
+    playSound('lose');
+  }
+
+  updateStreakDisplay();
+  battleArea.classList.add(`flash-${resultType}`);
+  resultTextEl.textContent = resultLabel;
+  resultTextEl.className   = `result-text show ${resultType}`;
+
+  const delay = resultType === 'draw' ? 1000 : 2000;
+  setTimeout(() => resetPvpRound(), delay);
+}
+
+async function resetPvpRound() {
+  myHandPvp = null;
+  try {
+    await fetch(`/api/room?id=${roomId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reset: true }),
+    });
+  } catch { /* 無視 */ }
+  resetRound();
+  prevStatus = 'ready';
+  pvpStatusTextEl.textContent = '手を選んでください';
+  pvpStatusTextEl.classList.add('ready');
+  startPolling();
+}
+
+// ===========================
+// ===== CPUモード共通 =====
+// ===========================
+
 function init() {
   renderLocalRanking();
   renderOnlineRanking();
-  resetRound();
+
+  // URLパラメータでPvPモード自動起動
+  const { room, p } = parsePvpParams();
+  if (room && p) {
+    joinRoom(room, p);
+  } else {
+    resetRound();
+  }
 
   // タブ切り替え
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -214,16 +424,32 @@ function init() {
       document.getElementById(btn.dataset.tab).classList.add('active');
     });
   });
+
+  pvpCreateBtn.addEventListener('click', createRoom);
+  pvpExitBtnEl.addEventListener('click', exitPvpMode);
+
+  pvpCopyBtnEl.addEventListener('click', () => {
+    const url = `${location.origin}?room=${roomId}&p=2`;
+    navigator.clipboard.writeText(url).then(() => {
+      pvpCopyBtnEl.textContent = '✓ コピーしました';
+      pvpCopyBtnEl.classList.add('copied');
+      setTimeout(() => {
+        pvpCopyBtnEl.textContent = '📋 URLをコピー';
+        pvpCopyBtnEl.classList.remove('copied');
+      }, 2000);
+    });
+  });
 }
 
-// ===== ラウンドリセット =====
 function resetRound() {
-  cpuHandEl.textContent = '✊';
-  cpuHandEl.className   = 'hand-icon idle';
+  cpuHandEl.textContent = pvpMode ? '❓' : '✊';
+  cpuHandEl.className   = pvpMode ? 'hand-icon' : 'hand-icon idle';
   callTextEl.textContent = 'じゃんけん？';
   resultTextEl.textContent = '';
   resultTextEl.className   = 'result-text';
-  battleArea.className     = 'battle-area';
+  battleArea.className     = pvpMode
+    ? 'battle-area pvp-active'
+    : 'battle-area';
   if (shareBtn) shareBtn.style.display = 'none';
   choiceBtns.forEach(btn => {
     btn.disabled = false;
@@ -232,12 +458,10 @@ function resetRound() {
   isPlaying = false;
 }
 
-// ===== プレイヤーが選択 =====
 function onPlayerChoice(playerKey) {
   if (isPlaying) return;
   isPlaying = true;
 
-  // 履歴を記録（CPU AIの学習用）
   playerHistory.push(playerKey);
   if (playerHistory.length > HISTORY_SIZE) playerHistory.shift();
 
@@ -246,10 +470,19 @@ function onPlayerChoice(playerKey) {
     if (btn.dataset.hand === playerKey) btn.classList.add('selected');
   });
 
-  // 掛け声ランダム選択
+  // ===== PvPモード =====
+  if (pvpMode) {
+    submitHandPvp(playerKey).catch(() => {});
+    callTextEl.textContent = '相手の手を待っています…';
+    cpuHandEl.textContent  = '⏳';
+    cpuHandEl.className    = 'hand-icon waiting';
+    return;
+  }
+
+  // ===== CPUモード =====
   const call = CALLS[Math.floor(Math.random() * CALLS.length)];
   callTextEl.textContent = call;
-  cpuHandEl.className = 'hand-icon shaking';
+  cpuHandEl.className    = 'hand-icon shaking';
 
   setTimeout(() => {
     callTextEl.textContent = 'ぽん！';
@@ -263,7 +496,6 @@ function onPlayerChoice(playerKey) {
   }, 800);
 }
 
-// ===== 結果表示 =====
 function showResult(playerKey, cpuKey) {
   let resultType, resultLabel;
 
@@ -272,13 +504,12 @@ function showResult(playerKey, cpuKey) {
     resultLabel = 'あいこ！もう一回！';
   } else if (WIN_MAP[playerKey] === cpuKey) {
     resultType  = 'win';
-    resultLabel = getWinMessage(streak + 1); // +1後のメッセージをpreview
+    resultLabel = getWinMessage(streak + 1);
   } else {
     resultType  = 'lose';
     resultLabel = '負け…💀';
   }
 
-  // スコア更新
   if (resultType === 'win') {
     streak++;
     triggerConfetti();
@@ -289,7 +520,6 @@ function showResult(playerKey, cpuKey) {
     if (finalStreak > 0) {
       saveLocalRanking(finalStreak);
       submitOnlineScore(finalStreak);
-      // シェアボタン表示
       if (shareBtn) {
         shareBtn.style.display = 'inline-flex';
         shareBtn.onclick = () => shareToX(finalStreak);
@@ -297,7 +527,6 @@ function showResult(playerKey, cpuKey) {
     }
     streak = 0;
   }
-  // draw: 連勝維持・ランキング保存なし
 
   updateStreakDisplay();
   battleArea.classList.add(`flash-${resultType}`);
@@ -308,15 +537,14 @@ function showResult(playerKey, cpuKey) {
   setTimeout(resetRound, delay);
 }
 
-// ===== ストリーク表示 =====
 function updateStreakDisplay() {
-  streakEl.textContent = streak;
+  const s = pvpMode ? pvpStreak : streak;
+  streakEl.textContent = s;
   streakEl.classList.remove('pop');
   void streakEl.offsetWidth;
   streakEl.classList.add('pop');
 }
 
-// ===== 紙吹雪 =====
 function triggerConfetti() {
   confettiLayer.innerHTML = '';
   const colors = ['#e94560','#f5a623','#4caf50','#2196f3','#9c27b0','#f7c94e'];
@@ -333,23 +561,18 @@ function triggerConfetti() {
   setTimeout(() => { confettiLayer.innerHTML = ''; }, 1800);
 }
 
-// ===== ローカルランキング =====
 function saveLocalRanking(score) {
   const list = loadLocalRanking();
   list.push({ score, date: new Date().toLocaleDateString('ja-JP') });
   list.sort((a, b) => b.score - a.score);
   const trimmed = list.slice(0, RANKING_MAX);
   localStorage.setItem(RANKING_KEY, JSON.stringify(trimmed));
-
-  // 1位更新かどうか判定
-  const prevBest = list.length > 1 ? list[1]?.score ?? 0 : 0;
+  const prevBest = list.length > 1 ? (list[1]?.score ?? 0) : 0;
   if (trimmed[0].score === score && score > prevBest) {
     showNewRecordBanner();
     playSound('record');
   }
-
   renderLocalRanking();
-
   setTimeout(() => {
     const items  = rankListEl.querySelectorAll('.rank-item');
     const latest = loadLocalRanking();
@@ -363,17 +586,13 @@ function saveLocalRanking(score) {
 }
 
 function loadLocalRanking() {
-  try {
-    return JSON.parse(localStorage.getItem(RANKING_KEY) || '[]');
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(RANKING_KEY) || '[]'); }
+  catch { return []; }
 }
 
 function renderLocalRanking() {
   const list = loadLocalRanking();
   bestEl.textContent = list.length > 0 ? `${list[0].score}連勝` : '—';
-
   if (list.length === 0) {
     rankListEl.innerHTML = '<li class="rank-empty">まだ記録がありません</li>';
     return;
@@ -388,7 +607,6 @@ function renderLocalRanking() {
   `).join('');
 }
 
-// ===== NEW RECORD バナー =====
 function showNewRecordBanner() {
   newRecordBanner.textContent = '🏆 NEW RECORD!';
   newRecordBanner.classList.remove('show');
@@ -397,10 +615,8 @@ function showNewRecordBanner() {
   setTimeout(() => newRecordBanner.classList.remove('show'), 2200);
 }
 
-// ===== イベント登録 =====
 choiceBtns.forEach(btn => {
   btn.addEventListener('click', () => onPlayerChoice(btn.dataset.hand));
 });
 
-// ===== 起動 =====
 init();

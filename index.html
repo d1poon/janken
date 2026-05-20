@@ -14,8 +14,22 @@
     <!-- ヘッダー -->
     <header>
       <h1>✊ じゃんけん！</h1>
-      <p>何連勝できるかチャレンジ</p>
+      <p id="header-sub">何連勝できるかチャレンジ</p>
     </header>
+
+    <!-- PvP招待パネル（PvPモード時のみ表示） -->
+    <div class="pvp-invite" id="pvp-invite" style="display:none">
+      <div class="pvp-invite-title">👥 友達を招待</div>
+      <div class="pvp-invite-sub">このURLを友達に送ってください</div>
+      <div class="pvp-url-box" id="pvp-url-box"></div>
+      <button class="pvp-copy-btn" id="pvp-copy-btn">📋 URLをコピー</button>
+    </div>
+
+    <!-- PvPステータス（PvPモード時のみ表示） -->
+    <div class="pvp-status-bar" id="pvp-status-bar" style="display:none">
+      <span id="pvp-status-text">友達の参加を待っています…</span>
+      <button class="pvp-exit-btn" id="pvp-exit-btn">✕ 退出</button>
+    </div>
 
     <!-- スコアバー -->
     <div class="score-bar">
@@ -34,7 +48,7 @@
       <div class="confetti-layer" id="confetti-layer"></div>
 
       <div class="cpu-hand-wrap">
-        <span class="cpu-label">CPU</span>
+        <span class="cpu-label" id="opponent-label">CPU</span>
         <span class="hand-icon idle" id="cpu-hand">✊</span>
       </div>
 
@@ -66,19 +80,20 @@
       </div>
     </div>
 
-    <!-- ランキング（タブ切り替え） -->
-    <div class="ranking">
+    <!-- 友達と対戦ボタン（CPUモード時のみ表示） -->
+    <button class="pvp-create-btn" id="pvp-create-btn">👥 友達と対戦する</button>
+
+    <!-- ランキング（CPUモード時のみ表示） -->
+    <div class="ranking" id="ranking-section">
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="tab-local">🏅 自分の記録</button>
         <button class="tab-btn" data-tab="tab-online">🌍 世界ランキング</button>
       </div>
-
       <div class="tab-panel active" id="tab-local">
         <ul class="rank-list" id="rank-list">
           <li class="rank-empty">まだ記録がありません</li>
         </ul>
       </div>
-
       <div class="tab-panel" id="tab-online">
         <ul class="rank-list" id="online-rank-list">
           <li class="rank-empty">読み込み中…</li>

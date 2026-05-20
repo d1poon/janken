@@ -16,6 +16,7 @@
   --win: #4caf50;
   --lose: #f44336;
   --draw: #9e9e9e;
+  --pvp: #7c4dff;
   --radius: 16px;
 }
 
@@ -60,6 +61,96 @@ header p {
   color: var(--text-muted);
   font-size: 0.8rem;
   margin-top: 2px;
+  transition: color 0.3s;
+}
+
+header p.pvp-mode {
+  color: var(--pvp);
+  font-weight: 600;
+}
+
+/* ===== PvP招待パネル ===== */
+.pvp-invite {
+  background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
+  border: 1px solid rgba(124,77,255,0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pvp-invite-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pvp);
+}
+
+.pvp-invite-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.pvp-url-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  word-break: break-all;
+  color: var(--text);
+  width: 100%;
+  text-align: center;
+}
+
+.pvp-copy-btn {
+  background: var(--pvp);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 22px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pvp-copy-btn:active { transform: scale(0.94); }
+.pvp-copy-btn.copied { background: var(--win); }
+
+/* ===== PvPステータスバー ===== */
+.pvp-status-bar {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#pvp-status-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+#pvp-status-text.ready {
+  color: var(--win);
+  font-weight: 700;
+}
+
+.pvp-exit-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ===== スコアバー ===== */
@@ -87,7 +178,7 @@ header p {
   line-height: 1.1;
 }
 
-.score-value.pop { animation: pop 0.3s ease; }
+.score-value.pop    { animation: pop 0.3s ease; }
 .score-value.streak { color: var(--gold); }
 
 /* ===== バトルエリア ===== */
@@ -102,6 +193,11 @@ header p {
   position: relative;
   overflow: hidden;
   min-height: 230px;
+  transition: border-color 0.3s;
+}
+
+.battle-area.pvp-active {
+  border: 1.5px solid rgba(124,77,255,0.4);
 }
 
 .battle-area::before {
@@ -129,7 +225,10 @@ header p {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  transition: color 0.3s;
 }
+
+.cpu-label.pvp { color: var(--pvp); }
 
 .hand-icon {
   font-size: 5rem;
@@ -140,6 +239,7 @@ header p {
 
 .hand-icon.idle    { animation: idle-sway 1.8s ease-in-out infinite; }
 .hand-icon.shaking { animation: shake 0.5s ease-in-out; }
+.hand-icon.waiting { animation: pulse-wait 1s ease-in-out infinite; }
 
 .call-text {
   font-size: 1.3rem;
@@ -200,7 +300,6 @@ header p {
 }
 
 .share-btn:active { transform: scale(0.94); }
-.share-btn:hover  { background: #1a1a1a; }
 
 /* ===== プレイヤーボタン ===== */
 .player-section {
@@ -255,6 +354,26 @@ header p {
   background: #1e2c1e;
   animation: selected-pulse 0.4s ease;
 }
+
+/* ===== 友達と対戦ボタン ===== */
+.pvp-create-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--pvp), #b34dff);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: opacity 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 20px rgba(124,77,255,0.35);
+}
+
+.pvp-create-btn:active  { transform: scale(0.97); }
+.pvp-create-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ===== ランキング（タブ） ===== */
 .ranking {
@@ -350,6 +469,11 @@ header p {
   60%  { transform: translateY(-10px) rotate(-8deg); }
   80%  { transform: translateY(0) rotate(4deg); }
   100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes pulse-wait {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.92); }
 }
 
 @keyframes pop {
